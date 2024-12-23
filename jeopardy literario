@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>¡Adivina el Lenguaje!</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>¡Adivina el Lenguaje!</h1>
+        <div id="team-info">
+            <h2>Equipos:</h2>
+            <ul id="team-list">
+                <li id="team1">Equipo 1: 0</li>
+                <li id="team2">Equipo 2: 0</li>
+                <li id="team3">Equipo 3: 0</li>
+                <li id="team4">Equipo 4: 0</li>
+            </ul>
+        </div>
+        <div id="game-board">
+            <!-- Tablero de preguntas -->
+        </div>
+        <div id="question-area">
+            <h2 id="question-text"></h2>
+            <input type="text" id="answer-input" placeholder="Escribe tu respuesta">
+            <button id="submit-answer">Enviar</button>
+        </div>
+        <div id="results">
+            <h2>Resultados</h2>
+            <p id="current-team">Turno del equipo:</p>
+            <p id="answer-status"></p>
+            <button id="next-question">Siguiente Pregunta</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+// Preguntas y respuestas -  20 preguntas (5 por categoría)
+const preguntas = {
+    "categoria1": {
+        "100": {"pregunta": "¿Qué recurso narrativo se usa predominantemente en 'No oyes ladrar los perros'?", "respuesta": "narración retrospectiva"},
+        "200": {"pregunta": "¿Qué tema central explora 'El almohadón de plumas'?", "respuesta": "la opresión femenina"},
+        "300": {"pregunta": "¿Cuál es el conflicto central en 'Un día de estos'?", "respuesta": "la tensión entre el personaje y su deuda"},
+        "400": {"pregunta": "¿Cómo se describe el lenguaje del protagonista de 'No oyes ladrar los perros'?", "respuesta": "sencillo y directo"},
+        "500": {"pregunta": "¿Qué tipo de narrador se utiliza en 'El almohadón de plumas'?", "respuesta": "narrador omnisciente"}
+    },
+    "categoria2": {
+        "100": {"pregunta": "¿Qué simboliza el perro en 'No oyes ladrar los perros'?", "respuesta": "la inocencia perdida"},
+        "200": {"pregunta": "¿Qué simboliza el almohadón en 'El almohadón de plumas'?", "respuesta": "la opresión y la enfermedad"},
+        "300": {"pregunta": "¿Cómo se caracteriza el lenguaje del personaje que se enfurece en 'Un día de estos'?", "respuesta": "agresivo e impulsivo"},
+        "400": {"pregunta": "¿Qué elementos del lenguaje contribuyen a la atmósfera de misterio en 'El almohadón de plumas'?", "respuesta": "descripciones detalladas y lenguaje figurativo"},
+        "500": {"pregunta": "¿Qué efecto tiene el uso del tiempo en 'No oyes ladrar los perros' en la trama?", "respuesta": "creación de suspenso"}
+    },
+    "categoria3": {
+        "100": {"pregunta": "¿Qué tipo de narración se utiliza en 'Un día de estos'?", "respuesta": "narración lineal"},
+        "200": {"pregunta": "¿Qué aspectos de la cultura latinoamericana se reflejan en 'No oyes ladrar los perros'?", "respuesta": "ruralidad, tradición, memoria"},
+        "300": {"pregunta": "¿Cómo se manifiesta el realismo mágico en 'El almohadón de plumas'?", "respuesta": "elementos sobrenaturales"},
+        "400": {"pregunta": "¿Qué representa la deuda en 'Un día de estos' en un sentido metafórico?", "respuesta": "el peso de las responsabilidades"},
+        "500": {"pregunta": "¿Cómo impacta el contexto social en el lenguaje de los personajes en 'Un día de estos'?", "respuesta": "refleja la clase social"}
+    }
+};
+
+// Equipos
+let equipos = ["Equipo 1", "Equipo 2", "Equipo 3", "Equipo 4"];
+let puntajes = [0, 0, 0, 0];
+let equipoActual = 0;
+
+// Elementos del DOM
+const tablero = document.getElementById("game-board");
+const preguntaTexto = document.getElementById("question-text");
+const respuestaInput = document.getElementById("answer-input");
+const enviarRespuesta = document.getElementById("submit-answer");
+const resultados = document.getElementById("results");
+const equipoActualTexto = document.getElementById("current-team");
+const estadoRespuesta = document.getElementById("answer-status");
+const siguientePregunta = document.getElementById("next-question");
+const listaEquipos = document.getElementById("team-list").querySelectorAll("li");
+
+
+// Crea el tablero de preguntas
+function crearTablero() {
+    for (const categoria in preguntas) {
+        const divCategoria = document.createElement("div");
+        divCategoria.classList.add("category");
+        divCategoria.innerHTML = `<h3>${categoria}</h3>`;
+        for (const valor in preguntas[categoria]) {
+            const divPregunta = document.createElement("div");
+            divPregunta.classList.add("question");
+            divPregunta.dataset.valor = valor;
+            divPregunta.dataset.categoria = categoria;
+            divPregunta.textContent = valor;
+            divPregunta.addEventListener("click", seleccionarPregunta);
+            divCategoria.appendChild(divPregunta);
+        }
+        tablero.appendChild(divCategoria);
+    }
+}
+
+// Selecciona una pregunta
+function seleccionarPregunta(evento) {
+    const preguntaSeleccionada = preguntas[evento.target.dataset.categoria][evento.target.dataset.valor];
+    preguntaTexto.textContent = preguntaSeleccionada.pregunta;
+    respuestaInput.value = "";
+    estadoRespuesta.textContent = "";
+    equipoActualTexto.textContent = `Turno del equipo: ${equipos[equipoActual]}`;
+    evento.target.removeEventListener("click", seleccionarPregunta); // Evita clics repetidos
+    evento.target.style.backgroundColor = "lightgray"; // Desactiva visualmente la pregunta
+}
+
+// Verifica la respuesta
+function verificarRespuesta() {
+    const respuestaUsuario = respuestaInput.value.toLowerCase();
+    const respuestaCorrecta = preguntas[preguntaSeleccionada.dataset.categoria][preguntaSeleccionada.dataset.valor].respuesta.toLowerCase();
+    if (respuestaUsuario.includes(respuestaCorrecta)) {
+        estadoRespuesta.textContent = "¡Correcto!";
+        puntajes[equipoActual] += parseInt(preguntaSeleccionada.dataset.valor);
+        actualizarPuntajes();
+    } else {
+        estadoRespuesta.textContent = "¡Incorrecto!";
+    }
+    siguientePregunta.style.display = "block";
+}
+
+// Actualiza los puntajes
+function actualizarPuntajes() {
+    listaEquipos.forEach((item, index) => {
+        item.textContent = `${equipos[index]}: ${puntajes[index]}`;
+    });
+}
+
+// Pasa al siguiente equipo
+function siguienteEquipo() {
+    equipoActual = (equipoActual + 1) % equipos.length;
+    siguientePregunta.style.display = "none";
+    //Reinicia la selección de preguntas.
+    crearTablero();
+}
+
+
+// Eventos
+enviarRespuesta.addEventListener("click", verificarRespuesta);
+siguientePregunta.addEventListener("click", siguienteEquipo);
+
+// Inicializa el juego
+crearTablero();
+siguientePregunta.style.display = "none"; //oculta el boton inicialmente.
